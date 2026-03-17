@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Department {
+  id        Int        @id @default(autoincrement())
+  name      String
+  employees Employee[]
+}
+
+model Location {
+  id     Int     @id @default(autoincrement())
+  name   String
+  assets Asset[]
+}
+
+model Category {
+  id     Int     @id @default(autoincrement())
+  name   String
+  assets Asset[]
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  login    String @unique
+  password String
+  role     String @default("viewer")
+}
+
+model Employee {
+  id               Int           @id @default(autoincrement())
+  fullName         String
+  departmentId     Int
+  department       Department    @relation(fields: [departmentId], references: [id])
+  position         String?
+  email            String?
+  assets           Asset[]
+  transactionsFrom Transaction[] @relation("FromEmployee")
+  transactionsTo   Transaction[] @relation("ToEmployee")
+}
+
+model Asset {
+  id               Int           @id @default(autoincrement())
+  name             String
+  model            String?
+  inventoryNumber  String?       @unique
+  categoryId       Int
+  category         Category      @relation(fields: [categoryId], references: [id])
+  status           String        @default("Active")
+  serialNumber     String?
+  employeeId       Int?
+  employee         Employee?     @relation(fields: [employeeId], references: [id])
+  locationId       Int?
+  location         Location?     @relation(fields: [locationId], references: [id])
+  transactions     Transaction[]
+}
+
+model Cartridge {
+  id                   Int     @id @default(autoincrement())
+  modelName            String
+  barcode              String? @unique
+  printerCompatibility String?
+  countNew             Int     @default(0)
+  countEmpty           Int     @default(0)
+  countRefilling       Int     @default(0)
+}
+
+model Transaction {
+  id             Int       @id @default(autoincrement())
+  assetId        Int
+  asset          Asset     @relation(fields: [assetId], references: [id])
+  fromEmployeeId Int?
+  fromEmployee   Employee? @relation("FromEmployee", fields: [fromEmployeeId], references: [id])
+  toEmployeeId   Int?
+  toEmployee     Employee? @relation("ToEmployee", fields: [toEmployeeId], references: [id])
+  date           DateTime  @default(now())
+  type           String
+}
